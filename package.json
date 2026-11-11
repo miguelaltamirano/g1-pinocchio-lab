@@ -1,0 +1,1 @@
+{"name":"g1-pinocchio-lab","private":true,"type":"module","scripts":{"check":"node qa/check.mjs"}}

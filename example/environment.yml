@@ -1,0 +1,8 @@
+name: g1-left-arm
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - pinocchio=3.9.0
+  - numpy=2.2
