@@ -28,7 +28,9 @@ jobs:
           node --check dist/app.js
           node --check dist/kinematics.js
           node --check dist/lessons.js
+          node --check dist/viewer.js
           node qa/check.mjs
+          node qa/check-viewer.mjs
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload static website

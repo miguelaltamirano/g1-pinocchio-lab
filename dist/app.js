@@ -1,5 +1,5 @@
-import {JOINTS,BODY,START,PRESETS} from './model.js';
-import {forward,step,sub,norm,dot,add,scale} from './kinematics.js';
+import {JOINTS,START,PRESETS} from './model.js';
+import {forward,step,sub,norm} from './kinematics.js';
 import {LESSONS} from './lessons.js';
 const $=s=>document.querySelector(s);
 const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -22,30 +22,25 @@ function animate(t){if(!running)return;if(t-lastTick>65){singleStep();lastTick=t
 $('#step-btn').addEventListener('click',()=>{singleStep();if(status==='running'){status='ready';updateStatus();}});
 $('#reset-btn').addEventListener('click',()=>{target=[...PRESETS.forward];damping=.03;$('#damping').value='.03';// assign the exact option value below
 $('#damping').value='0.03';document.querySelectorAll('[data-preset]').forEach(b=>b.classList.toggle('selected',b.dataset.preset==='forward'));syncSliders();resetSolver();});
-// Canvas is a joint-chain illustration using the same URDF arm transforms as Python.
-const canvas=$('#robot-canvas'),ctx=canvas.getContext('2d');let W=600,H=405,yaw=.57,pitch=.20,focused=false;
-function project(p){const center=focused?[.14,.14,.09]:[.04,.015,-.22];const s=(focused?1.65:.66)*H;const a=sub(p,center);const right=[-Math.sin(yaw),Math.cos(yaw),0];const up=[-Math.cos(yaw)*Math.sin(pitch),-Math.sin(yaw)*Math.sin(pitch),Math.cos(pitch)];return [W*.50+dot(a,right)*s,H*.49-dot(a,up)*s,dot(a,[Math.cos(yaw)*Math.cos(pitch),Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch)])];}
-function line(a,b,color,width=1,dash=[]){const pa=project(a),pb=project(b);ctx.beginPath();ctx.moveTo(pa[0],pa[1]);ctx.lineTo(pb[0],pb[1]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.setLineDash(dash);ctx.stroke();ctx.setLineDash([]);}
-function circle(p,r,fill,stroke=null){const a=project(p);ctx.beginPath();ctx.arc(a[0],a[1],r,0,2*Math.PI);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}}
-function polygon(points,fill,stroke){const ps=points.map(project);ctx.beginPath();ps.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}}
-function bone(a,b){line(a,b,'#b5c0ad',12);line(a,b,'#d4dccb',8);circle(b,5,'#f0f3e9','#9fae96');}
-function draw(){ctx.clearRect(0,0,W,H);const floor=-.84;for(let i=-5;i<=5;i++){const t=i*.14;line([t,-.7,floor],[t,.7,floor],'#dce3d5',.6);line([-.7,t,floor],[.7,t,floor],'#dce3d5',.6);}const ground=project([.02,0,floor]);ctx.beginPath();ctx.ellipse(ground[0],ground[1],H*.15,H*.025,0,0,Math.PI*2);ctx.fillStyle='#b7c4ab33';ctx.fill();
-for(const side of ['left','right']){const names=['pelvis',...['hip_pitch','hip_roll','hip_yaw','knee','ankle_pitch','ankle_roll'].map(x=>`${side}_${x}_link`)];for(let i=1;i<names.length;i++)bone(BODY[names[i-1]],BODY[names[i]]);const foot=BODY[`${side}_ankle_roll_link`];line(add(foot,[-.04,0,-.018]),add(foot,[.12,0,-.018]),'#a4b49a',11);}
-const torso=[[-.045,-.11,.25],[-.045,.11,.25],[-.04,.09,-.015],[-.04,-.09,-.015]];polygon(torso,'#d9e0d0','#bbc8b2');const front=torso.map(p=>add(p,[.09,0,0]));polygon([torso[0],front[0],front[1],torso[1]],'#e7ebdf','#bdc9b3');polygon(front,'#e7ebdf','#bdc9b3');line([0,0,.25],[0,0,.32],'#aab9a0',10);const hp=project([0,0,.39]);ctx.fillStyle='#d4ddc8';ctx.strokeStyle='#abbda0';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(hp[0]-17,hp[1]-22,34,39,11);ctx.fill();ctx.stroke();ctx.fillStyle='#647a61';ctx.beginPath();ctx.roundRect(hp[0]-12,hp[1]-13,24,13,4);ctx.fill();
-const right=['shoulder_pitch','shoulder_roll','shoulder_yaw','elbow','wrist_roll','wrist_pitch','wrist_yaw'].map(x=>BODY[`right_${x}_link`]);for(let i=1;i<right.length;i++)bone(right[i-1],right[i]);line(right.at(-1),add(right.at(-1),[.07,0,0]),'#aebca4',9);
-const initial=forward(START);for(let i=1;i<initial.points.length;i++)line(initial.points[i-1],initial.points[i],'#9cad8f55',2,[4,5]);
-const f=forward(q);for(let i=1;i<f.points.length;i++){line(f.points[i-1],f.points[i],'#b6c9ad',11);line(f.points[i-1],f.points[i],'#285247',7);}for(let i=0;i<7;i++)circle(f.points[i],4.2,'#f6f9ef','#245246');circle(f.p,5.5,'#7da66b','#fff');
-const tp=project(target);line(f.p,target,'#df754999',1.2,[4,4]);circle(target,13,'#e37d4e15');circle(target,7,'#e7f0dc','#d6794b');circle(target,3,'#df7549');ctx.strokeStyle='#df7549';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(tp[0]-18,tp[1]);ctx.lineTo(tp[0]-11,tp[1]);ctx.moveTo(tp[0]+11,tp[1]);ctx.lineTo(tp[0]+18,tp[1]);ctx.moveTo(tp[0],tp[1]-18);ctx.lineTo(tp[0],tp[1]-11);ctx.moveTo(tp[0],tp[1]+11);ctx.lineTo(tp[0],tp[1]+18);ctx.stroke();ctx.font='10px ui-monospace, monospace';ctx.fillStyle='#b56843';const text=status==='converged'?'target reached':'target';const tx=Math.max(10,Math.min(W-ctx.measureText(text).width-10,tp[0]+22));ctx.fillText(text,tx,Math.max(40,Math.min(H-45,tp[1]-10)));
-const o=project([0,0,0]);ctx.fillStyle='#8b9a80';ctx.font='9px ui-monospace, monospace';ctx.fillText('torso_link',o[0]-75,o[1]+8);circle([0,0,0],2.2,'#9fae96');
-if(!focused){const origin=[.4,-.36,floor];[['x',[.14,0,0],'#b4785d'],['y',[0,.14,0],'#6d8b65'],['z',[0,0,.14],'#819699']].forEach(([label,v,color])=>{line(origin,add(origin,v),color,1.3);const p=project(add(origin,scale(v,1.2)));ctx.fillStyle=color;ctx.fillText(label,p[0],p[1]);});}}
-function resize(){const r=canvas.getBoundingClientRect();W=r.width;H=r.height;const d=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(W*d);canvas.height=Math.round(H*d);ctx.setTransform(d,0,0,d,0,0);draw();}
-new ResizeObserver(resize).observe(canvas);
-$('#focus-btn').addEventListener('click',()=>{focused=!focused;$('#focus-btn').setAttribute('aria-pressed',String(focused));$('#focus-btn').innerHTML=focused?'Show body <span aria-hidden="true">↙</span>':'Focus arm <span aria-hidden="true">↗</span>';draw();});
-let dragging=null;
-canvas.addEventListener('pointerdown',e=>{dragging=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{if(!dragging)return;yaw-=(e.clientX-dragging[0])*.008;pitch=Math.max(-.15,Math.min(.8,pitch+(e.clientY-dragging[1])*.005));dragging=[e.clientX,e.clientY];draw();});
-canvas.addEventListener('pointerup',()=>dragging=null);canvas.addEventListener('pointercancel',()=>dragging=null);
-canvas.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();yaw+=(e.key==='ArrowLeft'?.15:-.15);draw();}});
+// Load the mesh renderer separately so code lessons and IK remain usable if WebGL fails.
+let viewer = null;
+function draw(){viewer?.update(q,target,status,iterations);}
+const viewerButtons = ['focus-btn','camera-reset','zoom-in','zoom-out','show-frames','show-path'];
+import('./viewer.js').then(m=>m.createViewer($('#robot-canvas'))).then(v=>{
+  viewer=v; draw(); $('#viewer-loading').hidden=true;
+  $('#robot-canvas').dataset.ready='true';
+  viewerButtons.forEach(id=>$('#'+id).disabled=false);
+}).catch(error=>{
+  console.error('3D viewer:',error);
+  $('#viewer-loading').textContent='The 3D view could not load. Enable WebGL and reload, or download the MuJoCo lab below. The IK controls and code guide still work.';
+  $('#robot-canvas').dataset.ready='error';
+});
+$('#focus-btn').addEventListener('click',()=>{const focused=viewer.focus();$('#focus-btn').setAttribute('aria-pressed',String(focused));$('#focus-btn').textContent=focused?'Show body ↙':'Focus arm ↗';});
+$('#camera-reset').addEventListener('click',()=>{viewer.reset();$('#focus-btn').setAttribute('aria-pressed','false');$('#focus-btn').textContent='Focus arm ↗';});
+$('#zoom-in').addEventListener('click',()=>viewer.zoom(.85));
+$('#zoom-out').addEventListener('click',()=>viewer.zoom(1.18));
+$('#show-frames').addEventListener('change',e=>viewer.setFrames(e.target.checked));
+$('#show-path').addEventListener('change',e=>viewer.setPath(e.target.checked));
 // Implementation guide.
 let lessonIndex=0;
 $('#lesson-nav').innerHTML=LESSONS.map((s,i)=>`<button data-lesson="${i}" ${i===0?'aria-current="step"':''}><span class="step-number">${String(i+1).padStart(2,'0')}</span><span><span class="step-title">${s.title}</span><span class="step-description">${s.label}</span></span></button>`).join('');
@@ -60,4 +55,4 @@ for(const b of document.querySelectorAll('[data-os]'))b.addEventListener('click'
 let fullCode='';
 $('#open-code').addEventListener('click',async()=>{try{if(!fullCode){const r=await fetch('downloads/left_arm_ik.py');if(!r.ok)throw Error('File unavailable');fullCode=await r.text();}$('#full-code').innerHTML=highlight(fullCode);$('#code-dialog').showModal();}catch{toast('Could not load the code. Download the example ZIP instead.');}});
 $('#close-code').addEventListener('click',()=>$('#code-dialog').close());$('#copy-full').addEventListener('click',()=>copy(fullCode));$('#code-dialog').addEventListener('click',e=>{if(e.target===$('#code-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
-setLesson(0);syncSliders();$('#damping').value=String(damping);updateStatus();resize();
+setLesson(0);syncSliders();$('#damping').value=String(damping);updateStatus();draw();
