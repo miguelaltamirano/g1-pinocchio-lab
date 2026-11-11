@@ -4,6 +4,10 @@ An implementation-first student website for Unitree G1 left-arm inverse kinemati
 
 The website is plain HTML, CSS and JavaScript. There is no build step, backend, API key, or student sign-in.
 
+**Student website:** https://miguelaltamirano.github.io/g1-pinocchio-lab/
+
+**Deployment status:** [Publish student website](https://github.com/miguelaltamirano/g1-pinocchio-lab/actions/workflows/pages.yml)
+
 ## What students learn
 
 1. Load the G1 URDF with `pin.buildModelFromUrdf`.
@@ -23,13 +27,13 @@ The browser preview implements the same position-only DLS update in JavaScript; 
 4. Open **Actions → Publish student website → Run workflow**. If the first automatic run happened before Pages was enabled, rerun it.
 5. After deployment succeeds, **Settings → Pages** and the workflow's `github-pages` environment show the actual student URL.
 
-For a personal project repository named `g1-pinocchio-lab`, the default URL normally has this form:
+For this repository, the student URL is:
 
 ```text
-https://YOUR-USERNAME.github.io/g1-pinocchio-lab/
+https://miguelaltamirano.github.io/g1-pinocchio-lab/
 ```
 
-This is a URL template, not a currently deployed GitHub site. Relative asset and download paths support the repository subpath. Future pushes to `main` automatically check and deploy `dist/`.
+Relative asset and download paths support the repository subpath. Future pushes to `main` automatically check and deploy `dist/`.
 
 GitHub Pages supports public repositories on GitHub Free. Official documentation: [custom Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
